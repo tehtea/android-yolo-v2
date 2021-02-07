@@ -3,9 +3,10 @@ package org.tensorflow.yolo;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 
-import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 import org.tensorflow.yolo.model.PostProcessingOutcome;
 import org.tensorflow.yolo.util.ClassAttrProvider;
+
+import me.daquexian.dabnn.Net;
 
 import java.io.IOException;
 import java.util.Vector;
@@ -15,7 +16,9 @@ import static org.tensorflow.yolo.Config.IMAGE_STD;
 import static org.tensorflow.yolo.Config.INPUT_NAME;
 import static org.tensorflow.yolo.Config.INPUT_SIZE;
 import static org.tensorflow.yolo.Config.MODEL_FILE;
+import static org.tensorflow.yolo.Config.OUTPUT_CHANNELS;
 import static org.tensorflow.yolo.Config.OUTPUT_NAME;
+import static org.tensorflow.yolo.Config.OUTPUT_WIDTH;
 
 /**
  * A classifier specialized to label images using TensorFlow.
@@ -24,7 +27,7 @@ import static org.tensorflow.yolo.Config.OUTPUT_NAME;
 public class TensorFlowImageRecognizer {
     private int outputSize;
     private Vector<String> labels;
-    private TensorFlowInferenceInterface inferenceInterface;
+    private Net inferenceInterface;
 
     private TensorFlowImageRecognizer() {
     }
@@ -38,10 +41,8 @@ public class TensorFlowImageRecognizer {
     public static TensorFlowImageRecognizer create(AssetManager assetManager) {
         TensorFlowImageRecognizer recognizer = new TensorFlowImageRecognizer();
         recognizer.labels = ClassAttrProvider.newInstance(assetManager).getLabels();
-        recognizer.inferenceInterface = new TensorFlowInferenceInterface(assetManager,
-                "file:///android_asset/" + MODEL_FILE);
-        recognizer.outputSize = YOLOClassifier.getInstance()
-                .getOutputSizeByShape(recognizer.inferenceInterface.graphOperation(OUTPUT_NAME));
+        recognizer.inferenceInterface = new Net().readAsset(assetManager, MODEL_FILE);
+        recognizer.outputSize = (int) (OUTPUT_CHANNELS * Math.pow(OUTPUT_WIDTH, 2)); // TODO: find out how to get this
         return recognizer;
     }
 
@@ -50,25 +51,18 @@ public class TensorFlowImageRecognizer {
     }
 
     public String getStatString() {
-        return inferenceInterface.getStatString();
+        return "Hi"; // TODO: find out what to put for this
     }
 
     public void close() {
-        inferenceInterface.close();
+        inferenceInterface.dispose();
     }
 
     private float[] runTensorFlow(final Bitmap bitmap) {
-        final float[] tfOutput = new float[outputSize];
-        // Copy the input data into TensorFlow.
-        inferenceInterface.feed(INPUT_NAME, processBitmap(bitmap), 1, INPUT_SIZE, INPUT_SIZE, 3);
 
-        // Run the inference call.
-        inferenceInterface.run(new String[]{OUTPUT_NAME});
+        inferenceInterface.predict(processBitmap(bitmap));
 
-        // Copy the output Tensor back into the output array.
-        inferenceInterface.fetch(OUTPUT_NAME, tfOutput);
-
-        return tfOutput;
+        return inferenceInterface.getBlob(OUTPUT_NAME);
     }
 
     /**

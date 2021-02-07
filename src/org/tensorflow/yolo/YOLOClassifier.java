@@ -3,7 +3,6 @@ package org.tensorflow.yolo;
 import android.os.SystemClock;
 
 import org.apache.commons.math3.analysis.function.Sigmoid;
-import org.tensorflow.Operation;
 import org.tensorflow.yolo.model.BoundingBox;
 import org.tensorflow.yolo.model.BoxPosition;
 import org.tensorflow.yolo.model.PostProcessingOutcome;
@@ -17,6 +16,8 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Vector;
 
+import static org.tensorflow.yolo.Config.OUTPUT_WIDTH;
+
 /**
  * Implementation of YOLOv2 classifier based on the article:
  * https://arxiv.org/pdf/1612.08242.pdf
@@ -26,12 +27,13 @@ import java.util.Vector;
  */
 public class YOLOClassifier {
     private final static float OVERLAP_THRESHOLD = 0.5f;
-    private final static double anchors[] = {1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52};
-    private final static int SIZE = 13;
+    private final static double anchors[] = {1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62, 10.52};
+    private final static int SIZE = OUTPUT_WIDTH;
     private final static int MAX_RECOGNIZED_CLASSES = 13;
     private final static float THRESHOLD = 0.3f;
     private final static int MAX_RESULTS = 15;
     private final static int NUMBER_OF_BOUNDING_BOX = 5;
+
     private static YOLOClassifier classifier;
 
     private YOLOClassifier() {}
@@ -42,16 +44,6 @@ public class YOLOClassifier {
         }
 
         return  classifier;
-    }
-
-    /**
-     * Gets the number of classes based on the tensor shape
-     *
-     * @param operation tensorflow operation object
-     * @return the number of classes
-     */
-    public int getOutputSizeByShape(final Operation operation) {
-        return (int) (operation.output(0).shape().size(3) * Math.pow(SIZE,2));
     }
 
     /**
