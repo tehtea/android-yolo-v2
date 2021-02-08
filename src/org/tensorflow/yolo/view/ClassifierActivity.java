@@ -30,7 +30,7 @@ import static org.tensorflow.yolo.Config.LOGGING_TAG;
  * Classifier activity class
  * Modified by Zoltan Szabo
  */
-public class ClassifierActivity extends TextToSpeechActivity implements OnImageAvailableListener {
+public class ClassifierActivity extends CameraActivity implements OnImageAvailableListener {
     private boolean MAINTAIN_ASPECT = true;
     private float TEXT_SIZE_DIP = 10;
 
@@ -111,7 +111,6 @@ public class ClassifierActivity extends TextToSpeechActivity implements OnImageA
             lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
             lastPostProcessingTimeMs = recognitionOutput.getPostProcessingTime();
             overlayView.setResults(results);
-            speak(results);
             requestRender();
             computing = false;
         });
